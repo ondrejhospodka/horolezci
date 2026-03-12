@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expedice: Jde do tuhého</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --sky-top: #0f172a;
+            --sky-bottom: #38bdf8;
+            --mountain-light: rgba(255, 255, 255, 0.95);
+            --primary: #0284c7;
+            --primary-hover: #0369a1;
+            --danger: #ef4444;
+            --success: #10b981;
+            --text-main: #1e293b;
+            --text-light: #f8fafc;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            padding: 10px; 
+            text-align: center; 
+            color: var(--text-main);
+            min-height: 100vh;
+            background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
+            background-attachment: fixed;
+            position: relative;
+            overflow-x: hidden;
+            font-size: 14px; 
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            bottom: 0;
+            left: -10%;
+            width: 120%;
+            height: 40vh;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg"><path fill="%23ffffff" fill-opacity="0.2" d="M0,160L48,176C96,192,192,224,288,213.3C384,203,480,149,576,149.3C672,149,768,203,864,224C960,245,1056,235,1152,197.3C1248,160,1344,96,1392,64L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path><path fill="%23ffffff" fill-opacity="0.4" d="M0,288L48,272C96,256,192,224,288,218.7C384,213,480,235,576,218.7C672,203,768,149,864,133.3C960,117,1056,139,1152,149.3C1248,160,1344,160,1392,160L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path></svg>') bottom center no-repeat;
+            background-size: cover;
+            z-index: -2;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        /* Třídy pro úvodní obrazovku */
+        #start-screen { max-width: 600px; margin: 15vh auto; padding: 40px; }
+        .btn-start-container { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+        .btn-start {
+            padding: 15px 30px; font-size: 1.2em; background: var(--primary); color: white;
+            border: none; border-radius: 12px; cursor: pointer; transition: all 0.3s; font-weight: 800;
+        }
+        .btn-start:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(2, 132, 199, 0.4); }
+
+        #top-bar { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px 20px; margin-bottom: 20px; font-weight: 800; font-size: 1.2em; color: var(--primary);
+        }
+
+        .score-container { display: flex; align-items: center; gap: 10px; }
+        .score { 
+            background: var(--danger); color: white; padding: 4px 12px;
+            border-radius: 20px; font-size: 1.1em; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        #instructions-panel {
+            max-width: 600px; margin: 0 auto 20px auto; padding: 15px 25px;
+            text-align: left; font-size: 1em; color: var(--text-main);
+        }
+        #instructions-panel h2 { margin-top: 0; font-size: 1.2em; color: var(--primary); }
+        #instructions-panel ul { margin: 0; padding-left: 20px; }
+        #instructions-panel li { margin-bottom: 5px; }
+
+        #map-container { 
+            display: flex; flex-direction: column; align-items: center; gap: 12px; 
+            padding-top: 60px; padding-bottom: 40px; position: relative;
+            z-index: 1; max-width: 500px; margin: 0 auto;
+        }
+
+        #map-container::before {
+            content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 130%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 500 800" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><path d="M 250 20 L 500 800 L 0 800 Z" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.6)" stroke-width="4" stroke-linejoin="round"/><path d="M 250 20 L 320 220 L 290 240 L 270 210 L 240 250 L 210 210 L 170 240 L 190 190 Z" fill="rgba(255,255,255,0.8)"/></svg>') bottom center no-repeat;
+            background-size: 100% 100%; z-index: -1; pointer-events: none; 
+        }
+
+        .camp-btn { 
+            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(5px);
+            color: var(--text-main); border: 2px solid rgba(255, 255, 255, 0.9); 
+            padding: 12px 20px; border-radius: 30px; font-size: 1.1em; font-weight: 600;
+            cursor: pointer; width: 90%; max-width: 280px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .camp-btn:nth-child(odd) { margin-left: -35px; }
+        .camp-btn:nth-child(even) { margin-right: -35px; }
+        .camp-btn:hover:not(.completed) { transform: translateY(-2px); background: rgba(255, 255, 255, 1); }
+        .camp-btn.active { 
+            background: var(--primary); color: white; border-color: white;
+            box-shadow: 0 6px 15px rgba(2, 132, 199, 0.6); transform: scale(1.05); 
+        }
+        .camp-btn.completed { background: rgba(16, 185, 129, 0.85); color: white; border-color: var(--success); cursor: not-allowed; }
+        
+        #game-modal { 
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px); z-index: 100; 
+            flex-direction: column; padding: 10px; box-sizing: border-box;
+        }
+
+        #modal-content { max-width: 1000px; width: 100%; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
+        #modal-header { 
+            padding: 10px; background: transparent; color: var(--text-light); 
+            font-size: 1.5em; font-weight: 800; text-transform: uppercase; letter-spacing: 1px;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+
+        #quadrants { 
+            display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; 
+            flex-grow: 1; gap: 10px; padding: 5px; 
+        }
+
+        .quadrant { 
+            background: var(--mountain-light); border: 2px solid transparent; border-radius: 12px; 
+            padding: 15px; display: flex; flex-direction: column; justify-content: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: all 0.3s ease; position: relative;
+        }
+
+        .quadrant.blurred { overflow: hidden; background: #e2e8f0; border-color: #cbd5e1; }
+        .quadrant.blurred > *:not(.fog-overlay) { filter: blur(6px); opacity: 0.4; pointer-events: none; user-select: none; }
+        .fog-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.4); z-index: 10; 
+            font-size: 1.2em; font-weight: 800; color: var(--primary); text-align: center; padding: 20px; box-sizing: border-box;
+        }
+
+        .quadrant h3 { margin-top: 0; margin-bottom: 10px; color: var(--primary); text-transform: uppercase; font-size: 1em; opacity: 0.8; }
+        .quadrant.done { border-color: var(--success); background: rgba(209, 250, 229, 0.95); }
+        .quadrant.error { border-color: var(--danger); background: rgba(254, 226, 226, 0.95); }
+        
+        .rovnice-box {
+            display: flex; align-items: center; justify-content: center; flex-wrap: wrap; 
+            font-size: 1.2em; margin-bottom: 15px; gap: 8px; font-family: 'Cambria Math', 'Times New Roman', serif;
+            background: rgba(255,255,255,0.6); padding: 10px; border-radius: 8px;
+        }
+        .zlomek { display: flex; flex-direction: column; align-items: center; margin: 0 4px; }
+        .citatel { border-bottom: 2px solid var(--text-main); padding: 0 6px 1px 6px; }
+        .jmenovatel { padding: 1px 6px 0 6px; }
+
+        input[type="text"] { 
+            padding: 8px 15px; font-size: 1.1em; width: 70%; border: 2px solid #cbd5e1; 
+            border-radius: 6px; text-align: center; font-family: inherit;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); }
+        .btn-submit { 
+            margin-top: 10px; padding: 8px 20px; background: var(--primary); color: white; 
+            border: none; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: 600;
+        }
+
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .btn-option { padding: 10px; background: white; border: 2px solid #e2e8f0; border-radius: 6px; cursor: pointer; font-size: 1em; font-family: 'Cambria Math', serif; }
+        .btn-option:hover { border-color: var(--primary); background: #f0f9ff; }
+        
+        .solution-box { 
+            display: none; margin-top: 10px; text-align: left; font-size: 0.9em; 
+            background: #fffbeb; padding: 10px; border-radius: 6px; border-left: 4px solid #f59e0b; line-height: 1.4;
+        }
+
+        #continue-btn { 
+            display: none; margin-top: 10px; padding: 15px; background: var(--success); color: white; 
+            font-size: 1.2em; font-weight: 800; border: none; border-radius: 8px; cursor: pointer; text-transform: uppercase;
+        }
+
+        /* --- NOVÉ A UPRAVENÉ ANIMACE PRO VIZUÁLNÍ ODMĚNY/TRESTY --- */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-5px); } 40%, 80% { transform: translateX(5px); } }
+        .shake { animation: shake 0.4s ease-in-out; }
+        
+        @keyframes snap { 0% { transform: rotate(0deg); } 25% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } 75% { transform: rotate(-1deg); } 100% { transform: rotate(0deg); } }
+        .snap { animation: snap 0.5s; }
+
+        /* Animace pro úspěch - vyskočí, chvíli zůstane stát, pak odpluje nahoru */
+        @keyframes successPop { 
+            0% { opacity: 0; transform: scale(0.5) translateY(0); } 
+            15% { opacity: 1; transform: scale(1.3) translateY(-20px); } 
+            80% { opacity: 1; transform: scale(1.3) translateY(-30px); } 
+            100% { opacity: 0; transform: scale(1.5) translateY(-60px); } 
+        }
+        .floating-success { 
+            position: absolute; color: var(--success); font-weight: 900; font-size: 3em; 
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.8), 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none; animation: successPop 2.5s forwards; z-index: 1000; 
+            text-align: center;
+        }
+
+        /* Animace pro chybu - vyskočí, spadne trochu dolů a zmizí */
+        @keyframes errorPop { 
+            0% { opacity: 0; transform: scale(0.5) translateY(0); } 
+            15% { opacity: 1; transform: scale(1.3) translateY(10px); } 
+            80% { opacity: 1; transform: scale(1.3) translateY(20px); } 
+            100% { opacity: 0; transform: scale(1.5) translateY(50px); } 
+        }
+        .floating-error { 
+            position: absolute; color: var(--danger); font-weight: 900; font-size: 3em; 
+            text-shadow: 0 0 20px rgba(239, 68, 68, 0.8), 0 4px 10px rgba(0,0,0,0.3);
+            pointer-events: none; animation: errorPop 2.5s forwards; z-index: 1000; 
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            #quadrants { grid-template-columns: 1fr; grid-template-rows: auto; }
+            #modal-content { overflow-y: auto; }
+            /* Zmenšení plovoucích textů pro mobil */
+            .floating-success, .floating-error { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="glass-panel">
+        <h1 style="color: var(--primary); margin-top: 0; font-size: 2em;">🏔️ <br>Jde do tuhého</h1>
+        <p style="font-size: 1.2em; margin-top: 20px;">Než zahájíte výstup, zvolte velikost vaší výpravy:</p>
+        <div class="btn-start-container">
+            <button class="btn-start" onclick="startGame(3)">3 Hráči<br><span style="font-size: 0.7em; font-weight:normal;">(15 záchranných lan)</span></button>
+            <button class="btn-start" onclick="startGame(4)">4 Hráči<br><span style="font-size: 0.7em; font-weight:normal;">(20 záchranných lan)</span></button>
+        </div>
+    </div>
+
+    <div id="game-ui" style="display: none;">
+        <div id="top-bar" class="glass-panel">
+            <div>🏔️ Expedice</div>
+            <div class="score-container">
+                Záchranné lano: <span id="score" class="score">20</span>
+            </div>
+        </div>
+
+        <div id="instructions-panel" class="glass-panel">
+            <h2>Pravidla výstupu</h2>
+            <ul>
+                <li>Za každý špatně vypočítaný příklad se vám <strong>přetrhne jedno záchranné lano</strong>.</li>
+		        <li>Pokud <strong>rovnice nemá řešení</strong>, zadej velké písmeno <strong>N</strong>.</li>
+                <li>Pokud vyjde <strong>více řešení</strong>, seřaď je od nejmenšího a odděl středníkem a mezerou (např. <code>-3; 0</code>).</li>
+                <li>Pokud vyjde <strong>desetinné číslo</strong>, použij tečku (např. <code>1.25</code>).</li>
+            </ul>
+        </div>
+
+        <div id="map-container">
+        </div>
+    </div>
+
+    <div id="game-modal">
+        <div id="modal-content">
+            <div id="modal-header">Tábor</div>
+            <div id="quadrants">
+            </div>
+            <button id="continue-btn" onclick="finishCamp()">Všichni vyřešeno - Pokračovat ve výstupu! 🧗</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 20;
+        let playerCount = 4;
+        let currentCampIndex = 0;
+        let playersDone = [false, false, false, false];
+
+        const camps = [
+            {
+                name: "Aklimatizace", type: "input",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">2x</div><div class="jmenovatel">x − 1</div></div> = 4</div>`, a: "2", sol: "1. Podmínka: x ≠ 1.<br>2. Vynásobíme jmenovatelem (x - 1).<br>3. 2x = 4x - 4.<br>4. -2x = -4 &rarr; x = 2." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">1</div><div class="jmenovatel">x − 2</div></div> − <div class="zlomek"><div class="citatel">x</div><div class="jmenovatel">x<sup>2</sup> − 4</div></div> = <div class="zlomek"><div class="citatel">2</div><div class="jmenovatel">x + 2</div></div></div>`, a: "3", sol: "1. Společný jmenovatel je (x-2)(x+2).<br>2. 1(x+2) - x = 2(x-2).<br>3. Zjednodušíme: 2 = 2x - 4.<br>4. 2x = 6 &rarr; x = 3." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">3</div><div class="jmenovatel">x + 1</div></div> + <div class="zlomek"><div class="citatel">2</div><div class="jmenovatel">x − 1</div></div> = <div class="zlomek"><div class="citatel">5x</div><div class="jmenovatel">x<sup>2</sup> − 1</div></div></div>`, a: "N", sol: "1. Společný jmenovatel je (x-1)(x+1).<br>2. 3(x-1) + 2(x+1) = 5x.<br>3. 3x - 3 + 2x + 2 = 5x.<br>4. 5x - 1 = 5x &rarr; -1 = 0. Rovnice nemá řešení." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">x<sup>2</sup></div><div class="jmenovatel">x − 3</div></div> = <div class="zlomek"><div class="citatel">9</div><div class="jmenovatel">x − 3</div></div></div>`, a: "-3", sol: "1. Podmínka: x ≠ 3. Vynásobíme (x-3).<br>2. Vychází kvadratická rovnice x<sup>2</sup> = 9.<br>3. Kořeny jsou 3 a -3.<br>4. Protože x=3 zakazuje podmínka, jediným řešením je -3." }
+                ]
+            },
+            {
+                name: "Ledovec", type: "choice",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">x − 5</div><div class="jmenovatel">x + 2</div></div> > 0</div>`, options: ["x &isin; (-&infin;; -2) &cup; (5; &infin;)", "x &isin; (-2; 5)", "x &isin; &lang;5; &infin;)", "Nemá řešení"], a: 0, sol: "Nulové body jsou -2 a 5. Výraz má být kladný, takže hledáme intervaly, kde mají obě závorky stejné znaménko. Výsledkem jsou vnější intervaly." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">2x + 1</div><div class="jmenovatel">x − 1</div></div> &le; 1</div>`, options: ["x &isin; &lang;-2; 1)", "x &isin; (-2; 1)", "x &isin; (-&infin;; -2&gt;", "x &isin; (1; &infin;)"], a: 0, sol: "Převedeme 1 doleva, odečteme se společným jmenovatelem. Vyjde (x+2)/(x-1) &le; 0. Nulové body jsou -2 a 1. Výsledkem je vnitřní interval &lang;-2; 1)." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">x</div><div class="jmenovatel">x − 2</div></div> > 2</div>`, options: ["x &isin; (2; 4)", "x &isin; &lang;2; 4&gt;", "x &isin; (-&infin;; 2)", "x &isin; (4; &infin;)"], a: 0, sol: "Po převedení 2 doleva získáme (-x+4)/(x-2) > 0. Po vytknutí mínusu: (x-4)/(x-2) < 0. Nulové body jsou 2 a 4. Řešením je vnitřní interval (2; 4)." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">1</div><div class="jmenovatel">x</div></div> + <div class="zlomek"><div class="citatel">1</div><div class="jmenovatel">x + 1</div></div> &ge; 0</div>`, options: ["x &isin; (-1; -0.5&gt; &cup; (0; &infin;)", "x &isin; &lang;-1; -0.5&gt; &cup; &lang;0; &infin;)", "x &isin; (-&infin;; -1) &cup; &lang;-0.5; 0)", "Nemá řešení"], a: 0, sol: "Společný jmenovatel je x(x+1). V čitateli vyjde 2x+1. Nerovnice je (2x+1)/(x(x+1)) &ge; 0. Nulové body: -1, -0.5, 0. Určením znamének v intervalech vyjde (-1; -0.5&gt; &cup; (0; &infin;)." }
+                ]
+            },
+            {
+                name: "Sněžná bouře", type: "choice",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box">(x − 3)(x + 4) = 0</div>`, options: ["{-4; 3}", "{-3; 4}", "{-4; -3}", "{3; 4}"], a: 0, sol: "Součin je roven nule, pokud je alespoň jedna ze závorek rovna nule. Z první závorky x = 3, z druhé x = -4." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box">x(x − 2)(x + 5) < 0</div>`, options: ["x &isin; (-&infin;; -5) &cup; (0; 2)", "x &isin; (-5; 0) &cup; (2; &infin;)", "x &isin; (-&infin;; 0) &cup; (2; 5)", "x &isin; (-2; 0) &cup; (5; &infin;)"], a: 0, sol: "Nulové body jsou -5, 0 a 2. Vyznačíme na ose. Pro x > 2 je výraz kladný. Znaménka se střídají. Hledáme záporné intervaly." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">x<sup>2</sup> − 4</div><div class="jmenovatel">x − 1</div></div> &le; 0</div>`, options: ["x &isin; (-&infin;; -2&gt; &cup; (1; 2&gt;", "x &isin; &lang;-2; 1) &cup; &lang;2; &infin;)", "x &isin; (-&infin;; 1) &cup; &lang;2; &infin;)", "x &isin; &lang;-2; 2&gt;"], a: 0, sol: "1. Rozložíme čitatele: (x-2)(x+2)/(x-1) &le; 0.<br>2. Nulové body: -2, 1, 2. Podmínka: x &ne; 1.<br>3. Zkoumáme znaménka. Vyhovují intervaly od mínus nekonečna do -2 (včetně) a od 1 (vyjma) do 2 (včetně)." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box"><div class="zlomek"><div class="citatel">(x − 2)<sup>2</sup> &middot; (x + 1)</div><div class="jmenovatel">x − 4</div></div> &le; 0</div>`, options: ["x &isin; &lang;-1; 4)", "x &isin; (-&infin;; -1&gt; &cup; (4; &infin;)", "x &isin; &lang;-1; 2&gt; &cup; (4; &infin;)", "x &isin; (-&infin;; 2&gt;"], a: 0, sol: "Výraz (x-2)<sup>2</sup> je nezáporný, v bodě 2 se znaménko nemění. Nulové body pro změnu znaménka jsou -1 a 4. Interval je &lang;-1; 4). Bod 2 leží uvnitř, takže je vše v pořádku." }
+                ]
+            },
+            {
+                name: "Zrádná suť", type: "input",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box">x<sup>2</sup> + 3x = 0</div>`, a: "-3;0", sol: "Vytkneme x: x(x + 3) = 0. Kořeny jsou 0 a -3." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box">x<sup>2</sup> − 7x + 12 = 0</div>`, a: "3;4", sol: "Lze řešit přes Viètovy vzorce: součet je 7, součin 12. Kořeny jsou 3 a 4." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box">4x<sup>2</sup> − 13x + 10 = 0</div>`, a: "1.25;2", sol: "Diskriminant D = 169 - 160 = 9. Kořeny jsou (13 &plusmn; 3) / 8. x<sub>1</sub> = 2, x<sub>2</sub> = 10/8 = 1.25." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box">2x<sup>2</sup> − 3x + 5 = 0</div>`, a: "N", sol: "Diskriminant D = 9 - 40 = -31. Diskriminant je záporný, rovnice nemá v oboru reálných čísel řešení." }
+                ]
+            },
+            {
+                name: "Kyslíkový dluh", type: "choice",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box">x<sup>2</sup> − 16 &le; 0</div>`, options: ["x &isin; &lang;-4; 4&gt;", "x &isin; (-&infin;; -4&gt; &cup; &lang;4; &infin;)", "x &isin; (-4; 4)", "Nemá řešení"], a: 0, sol: "Rozložíme na (x-4)(x+4) &le; 0. Parabola je otevřená nahoru, osu x protíná v -4 a 4. Hledáme část pod osou." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box">4x<sup>2</sup> − 24x + 20 > 0</div>`, options: ["x &isin; (-&infin;; 1) &cup; (5; &infin;)", "x &isin; (1; 5)", "x &isin; &lang;1; 5&gt;", "x &isin; R"], a: 0, sol: "Vydělíme čtyřmi: x<sup>2</sup> - 6x + 5 > 0. Kořeny rovnice jsou 1 a 5. Parabola směřuje nahoru, hledáme část nad osou." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box">5x<sup>2</sup> + 6x + 2 > 0</div>`, options: ["x &isin; R", "Nemá řešení", "x &isin; (-&infin;; -1) &cup; (2; &infin;)", "x &isin; (-1; 2)"], a: 0, sol: "Diskriminant je záporný (36 - 40 = -4). Parabola se nedotýká osy x a celá leží nad ní. Nerovnice platí vždy." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box">5x<sup>2</sup> + 6x + 2 < 0</div>`, options: ["Nemá řešení", "x &isin; R", "x &isin; (0; &infin;)", "x &isin; (-&infin;; 0)"], a: 0, sol: "Diskriminant je záporný, parabola leží celá nad osou x. My ale hledáme, kdy je hodnota menší než nula. To nenastane nikdy." }
+                ]
+            },
+            {
+                name: "Zmrzlé převisy", type: "choice",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box">|x − 4| = 7</div>`, options: ["{-3; 11}", "{-11; 3}", "{3; 11}", "Nemá řešení"], a: 0, sol: "Vzdálenost čísla x od 4 je 7. Můžeme jít doprava (4+7=11) nebo doleva (4-7=-3)." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box">|x − 1| − |x − 2| = 1</div>`, options: ["x &isin; &lang;2; &infin;)", "x = 2", "x &isin; (-&infin;; 1&gt;", "x &isin; &lang;1; 2&gt;"], a: 0, sol: "Nulové body jsou 1 a 2. V intervalu &lang;2; &infin;) mají obě závorky kladný vnitřek, takže: (x-1) - (x-2) = 1 &rarr; 1 = 1. Platí pro celý interval." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box">|x − 2| − |x − 1| = 1</div>`, options: ["x &isin; (-&infin;; 1&gt;", "x &isin; &lang;1; 2&gt;", "x &isin; &lang;2; &infin;)", "x = 1"], a: 0, sol: "V intervalu (-&infin;; 1&gt; jsou vnitřky záporné. -(x-2) - (-(x-1)) = 1 &rarr; -x + 2 + x - 1 = 1 &rarr; 1 = 1. Platí pro celý tento interval." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box">|2x − 3| = x + 1</div>`, options: ["{2/3; 4}", "{-2/3; 4}", "{4}", "Nemá řešení"], a: 0, sol: "Nulový bod absolutní hodnoty je 3/2. Pro x &ge; 3/2: 2x-3 = x+1 &rarr; x=4. Pro x < 3/2: -2x+3 = x+1 &rarr; 3x=2 &rarr; x=2/3." }
+                ]
+            },
+            {
+                name: "Lavina", type: "choice",
+                questions: [
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Tréninková cesta</div><div class="rovnice-box">|x − 2| &le; 3</div>`, options: ["x &isin; &lang;-1; 5&gt;", "x &isin; (-1; 5)", "x &isin; (-&infin;; -1&gt; &cup; &lang;5; &infin;)", "x &isin; &lang;-5; 1&gt;"], a: 0, sol: "Geometricky: vzdálenost čísla x od 2 je maximálně 3. Jdeme od dvojky o tři doleva (-1) a o tři doprava (5)." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Standardní cesta</div><div class="rovnice-box">|3x − 1| > 5</div>`, options: ["x &isin; (-&infin;; -4/3) &cup; (2; &infin;)", "x &isin; (-4/3; 2)", "x &isin; (-&infin;; -2) &cup; (4/3; &infin;)", "x &isin; (-2; 4/3)"], a: 0, sol: "Rozdělíme na dvě nerovnice: 1) 3x-1 > 5 &rarr; 3x > 6 &rarr; x > 2. 2) 3x-1 < -5 &rarr; 3x < -4 &rarr; x < -4/3." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Výzva</div><div class="rovnice-box">|x + 1| + |x − 2| &le; 5</div>`, options: ["x &isin; &lang;-2; 3&gt;", "x &isin; (-2; 3)", "x &isin; (-&infin;; -2&gt; &cup; &lang;3; &infin;)", "x &isin; &lang;-3; 2&gt;"], a: 0, sol: "Pomocí nulových bodů -1 a 2 rozdělíme osu. Pro x < -1 vyjde &lang;-2; -1). Mezi body platí vždy. Pro x &ge; 2 vyjde &lang;2; 3&gt;. Sjednocením je &lang;-2; 3&gt;." },
+                    { q: `<div style="font-weight:bold; color:var(--primary); margin-bottom:5px;">Prvovýstup</div><div class="rovnice-box">|x − 3| > 2x − 1</div>`, options: ["x &isin; (-&infin;; 4/3)", "x &isin; (-&infin;; -2)", "x &isin; (4/3; &infin;)", "Nemá řešení"], a: 0, sol: "Nulový bod je 3. Pro x < 3: -x+3 > 2x-1 &rarr; 4 > 3x &rarr; x < 4/3. Pro x &ge; 3: x-3 > 2x-1 &rarr; -2 > x (nemá průnik s x &ge; 3)." }
+                ]
+            }
+        ];
+
+        function startGame(selectedPlayers) {
+            playerCount = selectedPlayers;
+            score = (playerCount === 3) ? 15 : 20;
+            
+            document.getElementById('score').innerText = score;
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-ui').style.display = 'block';
+            
+            initMap();
+        }
+
+        function initMap() {
+            const mapCont = document.getElementById('map-container');
+            mapCont.innerHTML = "";
+            for(let i = camps.length - 1; i >= 0; i--) {
+                const btn = document.createElement('button');
+                btn.className = `camp-btn ${i < currentCampIndex ? 'completed' : i === currentCampIndex ? 'active' : ''}`;
+                btn.innerText = camps[i].name;
+                
+                if(i === currentCampIndex) {
+                    btn.onclick = () => openCamp(i);
+                }
+                mapCont.appendChild(btn);
+            }
+        }
+
+        function openCamp(index) {
+            playersDone = [false, false, false, false];
+            const camp = camps[index];
+            document.getElementById('modal-header').innerText = camp.name;
+            document.getElementById('continue-btn').style.display = 'none';
+            const quads = document.getElementById('quadrants');
+            quads.innerHTML = "";
+
+            if (playerCount === 3) {
+                playersDone[1] = true;
+            }
+
+            camp.questions.forEach((qData, i) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'quadrant';
+                qDiv.id = `quad-${i}`;
+
+                if (playerCount === 3 && i === 1) {
+                    qDiv.classList.add('blurred');
+                    qDiv.innerHTML = `
+                        <div class="fog-overlay">
+                            <div style="font-size: 2em; margin-bottom: 5px;">🌫️</div>
+                            Zamlženo<br><span style="font-size: 0.7em; font-weight:normal;">(Tento příklad vynecháváte)</span>
+                        </div>
+                        <h3>Hráč ${i+1}</h3>
+                        ${qData.q}
+                    `;
+                } else {
+                    let inputHtml = "";
+                    if(camp.type === 'input') {
+                        inputHtml = `<input type="text" id="input-${i}" placeholder="Zadej výsledek">
+                                     <br><button class="btn-submit" onclick="checkAnswer(${i}, '${qData.a}', 'input')">Vyhodnotit</button>`;
+                    } else if (camp.type === 'choice') {
+                        inputHtml = `<div class="options-grid">
+                            ${qData.options.map((opt, optIndex) => 
+                                `<button class="btn-option" onclick="checkAnswer(${i}, ${optIndex}, 'choice', ${qData.a})">${opt}</button>`
+                            ).join('')}
+                        </div>`;
+                    }
+
+                    qDiv.innerHTML = `
+                        <h3>Hráč ${i+1}</h3>
+                        ${qData.q}
+                        <div id="control-${i}">${inputHtml}</div>
+                        <div id="sol-${i}" class="solution-box">${qData.sol}</div>
+                    `;
+                }
+
+                quads.appendChild(qDiv);
+            });
+
+            document.getElementById('game-modal').style.display = 'flex';
+        }
+
+        function checkAnswer(playerIndex, answerProvided, type, correctOptionIndex = null) {
+            if(playersDone[playerIndex]) return;
+
+            const quad = document.getElementById(`quad-${playerIndex}`);
+            const solBox = document.getElementById(`sol-${playerIndex}`);
+            const controlBox = document.getElementById(`control-${playerIndex}`);
+            let isCorrect = false;
+
+            if(type === 'input') {
+                let userVal = document.getElementById(`input-${playerIndex}`).value.trim().replace(',', '.');
+                userVal = userVal.replace(/\s*;\s*/g, ';');
+                isCorrect = (userVal === answerProvided);
+            } else if (type === 'choice') {
+                isCorrect = (answerProvided === correctOptionIndex);
+            }
+
+            playersDone[playerIndex] = true;
+            controlBox.style.display = 'none';
+            solBox.style.display = 'block';
+
+           if(isCorrect) {
+                quad.classList.add('done');
+                solBox.innerHTML = "<strong>✅ Správně! Skoba drží.</strong><br><br>" + solBox.innerHTML;
+
+                // --- NOVÁ GRAFICKÁ ODMĚNA PRO ÚSPĚCH ---
+                const rect = quad.getBoundingClientRect();
+                const plusEl = document.createElement('div');
+                plusEl.className = 'floating-success';
+                plusEl.innerHTML = '🎯<br>SKVĚLE!'; // Ikonka a text na dva řádky pro lepší efekt
+                
+                // Centrování vůči kvadrantu (odečítáme půlku odhadované šířky a výšky prvku)
+                plusEl.style.left = (rect.left + rect.width / 2 - 80) + 'px';
+                plusEl.style.top = (rect.top + rect.height / 2 - 60) + 'px';
+                document.body.appendChild(plusEl);
+
+                // Odstranění po 2.5 sekundách (odpovídá délce animace)
+                setTimeout(() => { plusEl.remove(); }, 2500);
+
+            } else {
+                quad.classList.add('error');
+                quad.classList.add('snap');
+
+                // --- ZVĚTŠENÁ A PRODLOUŽENÁ ANIMACE PRO CHYBU ---
+                const rect = quad.getBoundingClientRect();
+                const minusEl = document.createElement('div');
+                minusEl.className = 'floating-error';
+                minusEl.innerHTML = '💥<br>-1 LANO!';
+                
+                // Centrování
+                minusEl.style.left = (rect.left + rect.width / 2 - 80) + 'px';
+                minusEl.style.top = (rect.top + rect.height / 2 - 60) + 'px';
+                document.body.appendChild(minusEl);
+
+                // Odstranění po 2.5 sekundách
+                setTimeout(() => { minusEl.remove(); quad.classList.remove('snap'); }, 2500);
+
+                score--;
+                const scoreEl = document.getElementById('score');
+                scoreEl.innerText = score;
+                scoreEl.classList.add('shake');
+                setTimeout(() => scoreEl.classList.remove('shake'), 400);
+
+                solBox.innerHTML = "<strong>❌ Chyba! Lano povolilo. Podívej se na postup:</strong><br><br>" + solBox.innerHTML;
+            }
+
+            if(playersDone.every(status => status === true)) {
+                document.getElementById('continue-btn').style.display = 'block';
+            }
+        }
+
+        function finishCamp() {
+            document.getElementById('game-modal').style.display = 'none';
+            currentCampIndex++;
+            if(currentCampIndex >= camps.length) {
+                document.getElementById('instructions-panel').style.display = 'none';
+                document.getElementById('map-container').innerHTML = `
+                    <div class="glass-panel" style="padding: 30px; margin-top: 30px; position: relative; z-index: 10;">
+                        <h2 style="font-size: 2em; color: var(--success); margin-top:0;">🏔️ Vrchol dobyt!</h2>
+                        <p style="font-size: 1.3em;">Zbývá lana: <strong>${score}</strong> bodů.</p>
+                        <p>Gratulujeme výpravě k úspěšnému výstupu!</p>
+                    </div>`;
+            } else {
+                initMap();
+            }
+        }
+    </script>
+</body>
+</html>
